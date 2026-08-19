@@ -148,6 +148,48 @@ def test_dispvm_parent_sorting(test_desktop_file_path, test_qapp, test_builder):
         assert False
 
 
+def test_dispvm_parent_sorting_deferred_template(
+    test_desktop_file_path, test_qapp, test_builder
+):
+    # check if dispvm child is sorted after the parent
+    name = "disp1233"
+    qube = test_qapp._qubes[name] = MockQube(
+        name=name,
+        qapp=test_qapp,
+        klass="DispVM",
+        template_for_dispvms="True",
+        template="default-dvm",
+        auto_cleanup=True,
+    )
+    qube.active_template = "test-alt-dvm"
+    test_qapp.update_vm_calls()
+
+    dispatcher = MockDispatcher(test_qapp)
+    vm_manager = VMManager(test_qapp, dispatcher)
+
+    with mock.patch.object(
+        DesktopFileManager, "desktop_dirs", [test_desktop_file_path]
+    ):
+        desktop_file_manager = DesktopFileManager(test_qapp)
+
+    app_page = AppPage(vm_manager, test_builder, desktop_file_manager)
+
+    found_dvm = False
+
+    for row in app_page.vm_list.get_children():
+        if found_dvm:
+            if row.vm_name == name and row.vm_entry.parent_vm:
+                break
+            found_dvm = False
+            continue
+        if row.vm_entry.is_dispvm_template:
+            print("DVM:", row.vm_name)
+            found_dvm = True
+            continue
+    else:
+        assert False
+
+
 def test_settings_app_page(test_desktop_file_path, test_qapp, test_builder):
     # a basic sanity test
     dispatcher = MockDispatcher(test_qapp)

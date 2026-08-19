@@ -42,7 +42,7 @@ class VMEntry:
         self.vm_klass = vm.klass
 
         if self.vm.klass == "DispVM" and self.vm.auto_cleanup:
-            self.parent_vm = self.vm.template
+            self.parent_vm = self.vm.get_active_template()
             self.sort_name = (
                 f"{str(self.parent_vm.name).lower()} :{self.vm_name.lower()}"
             )
@@ -315,7 +315,7 @@ class VMManager:
             if feature == "internal":
                 vm_entry.internal = value
                 for derived in self.qapp.domains:
-                    if not getattr(derived, "template", None) == vm:
+                    if not derived.get_active_template() == vm:
                         continue
                     derived_vm_entry = self.load_vm_from_name(derived)
                     if derived_vm_entry:
